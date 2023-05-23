@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Web App</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@300&display=swap');
+        /* Maplystory themed fonts */
+
+        body {
+            font-family: 'Chakra Petch', sans-serif;
+            background-color: #f8f9fa;
+            background-image: url('simple_background.jpg');
+            /* Replace with the URL of a Maplestory themed background image */
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
+        h3 {
+            font-family: 'Bungee', sans-serif;
+            color: #e63946;
+        }
+
+        .carousel-container {
+            position: relative;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow: hidden;
+        }
+
+        .carousel {
+            display: flex;
+            overflow-x: scroll;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: -15px;
+        }
+
+        .preview-img-container {
+            position: relative;
+            flex: 0 0 auto;
+            margin-right: 10px;
+        }
+
+        .preview-img-container:last-child {
+            margin-right: 0;
+        }
+
+        .preview-img-container img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .preview-img-container .remove-img-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #e63946;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        #bucketCounts {
+            margin-top: -30px;
+            /* Adjust the value as needed */
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        #bucketCounts th,
+        #bucketCounts td {
+            border-bottom: 1px solid #ddd;
+            padding: 15px;
+            background-color: #a8dadc;
+        }
+
+        #bucketCounts th {
+            background-color: #1d3557;
+            color: white;
+        }
+
+        button {
+            font-size: 20px;
+            background-color: #1d3557;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color .3s;
+        }
+
+        button:hover {
+            background-color: #457b9d;
+        }
+
+        /* Hide the results by default */
+        #result,
+        #bucketCounts {
+            display: none;
+        }
+
+        /* Style and center the upload container */
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            gap: 20px;
+            align-content: start;
+            /* creates vertical space between elements */
+        }
+
+        #beforeImages {
+            display: flex;
+            /* This creates a horizontal layout */
+            overflow-x: auto;
+            /* This enables horizontal scrolling */
+            margin-top: 20px;
+            /* Add some space on top of the container */
+            margin-bottom: 20px;
+            max-height: 400px;
+            /* Set a fixed height for the container */
+            overflow-y: hidden;
+            /* Hide vertical scrollbar */
+            scroll-behavior: smooth;
+        }
+
+        /* Hide the default file input and style the label */
+        #fileUpload {
+            display: none;
+        }
+
+        label[for="fileUpload"],
+        button {
+            font-size: 20px;
+            background-color: #1d3557;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color .3s;
+        }
+
+        label[for="fileUpload"]:hover,
+        button:hover {
+            background-color: #457b9d;
+        }
+
+        .circular-progress {
+            display: none;
+            position: relative;
+            width: 20px;
+            height: 20px;
+            margin-bottom: 20px;
+            top: -10px;
+        }
+
+
+        .progress-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 15px;
+            color: #1d3557;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="upload-container">
+        <label for="fileUpload">Choose Files</label>
+        <input type="file" id="fileUpload" multiple>
+        <button onclick="uploadImages()">Upload</button>
+        <div id="beforeImages" class="carousel-container">
+            <div class="carousel"></div>
+        </div>
+        <div id="result"></div>
+        <div>
+            <table id="bucketCounts">
+                <thead>
+                    <tr>
+                        <th>Bucket</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be added here dynamically -->
+                </tbody>
+            </table>
+        </div>
+        <div class="circular-progress">
+            <div class="progress-indicator"></div>
+        </div>
+    </div>
+
+    <script>
+        const input = document.querySelector('#fileUpload');
+        const beforeImagesDiv = document.querySelector('#beforeImages');
+        const bucketCountsTableBody = document.querySelector('#bucketCounts tbody');
+        let selectedFiles = [];
+
+        input.addEventListener('change', function (e) {
+            for (let i = 0; i < e.target.files.length; i++) {
+                let file = e.target.files[i];
+                selectedFiles.push(file);
+
+                const previewContainer = document.createElement('div');
+                previewContainer.classList.add('preview-img-container');
+
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.alt = 'Before Image';
+
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'X';
+                removeButton.classList.add('remove-img-btn');
+                removeButton.addEventListener('click', function () {
+                    const index = selectedFiles.indexOf(file);
+                    if (index > -1) {
+                        selectedFiles.splice(index, 1);
+                        previewContainer.remove();
+                    }
+                });
+
+                previewContainer.appendChild(img);
+                previewContainer.appendChild(removeButton);
+                beforeImagesDiv.appendChild(previewContainer);
+            }
+        });
+
+        async function uploadImages() {
+            const resultDiv = document.querySelector('#result');
+            const bucketCountsTable = document.querySelector('#bucketCounts');
+
+            // Circular Progress
+            const circularProgress = document.querySelector('.circular-progress');
+            const progressIndicator = document.querySelector('.progress-indicator');
+
+            let progress = 0;
+
+            function updateProgress() {
+                progressIndicator.textContent = progress + '%';
+            }
+
+            function animateProgress() {
+                progress++;
+                if (progress > 100) {
+                    progress = 0;
+                }
+                updateProgress();
+            }
+
+            setInterval(animateProgress, 150);
+
+            circularProgress.style.display = 'block';
+            beforeImagesDiv.innerHTML = '';
+
+
+            if (selectedFiles.length > 0) {
+                let formData = new FormData();
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    formData.append('images', selectedFiles[i]);
+                }
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/upload');
+
+                xhr.onload = function () {
+                    // Handle the response
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText);
+                        console.log(JSON.stringify(data));
+
+                        // Clear before images and bucket counts
+                        beforeImagesDiv.innerHTML = '';
+                        bucketCountsTableBody.innerHTML = '';
+
+                        // Display the bucket counts
+                        for (const bucket in data) {
+                            const row = document.createElement('tr');
+
+                            const bucketCell = document.createElement('td');
+                            bucketCell.textContent = bucket;
+                            row.appendChild(bucketCell);
+
+                            const countCell = document.createElement('td');
+                            countCell.textContent = data[bucket];
+                            row.appendChild(countCell);
+
+                            bucketCountsTableBody.appendChild(row);
+                        }
+
+                        // Show the result and the bucket count table
+                        resultDiv.style.display = 'block';
+                        bucketCountsTable.style.display = 'table';
+
+                        // Clear selectedFiles array for next round of uploads
+                        selectedFiles = [];
+                    } else {
+                        resultDiv.textContent = 'An error occurred.';
+                    }
+
+                    circularProgress.style.display = 'none';
+                };
+
+                xhr.send(formData);
+            }
+        }
+
+    </script>
+</body>
+
+</html>
