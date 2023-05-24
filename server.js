@@ -98,14 +98,12 @@ app.post('/upload', upload.array('images'), async (req, res) => {
     return;
   }
 
+  console.log("Uploading Images...");
   const fileBuffers = req.files.map(file => file.buffer);
 
   try {
-    const extractedTexts = [];
-
-    for (let i = 0; i < fileBuffers.length; i++) {
-      const buffer = fileBuffers[i];
-
+    // Map fileBuffers to an array of promises
+    const ocrPromises = fileBuffers.map(async buffer => {
       // Load the buffer into a Jimp image
       const image = await Jimp.read(buffer);
 
@@ -122,19 +120,22 @@ app.post('/upload', upload.array('images'), async (req, res) => {
 
       // Extract lines of text and map them to buckets
       const lines = text.split('\n');
-      const extractedLines = lines.map(line => {
+      return lines.map(line => {
         const bucket = matchTextToBucket(line);
         return { line, bucket };
       });
+    });
 
-      extractedTexts.push(...extractedLines);
-    }
+    // Await all OCR promises to resolve
+    const extractedTexts = await Promise.all(ocrPromises);
+    // Flatten the array
+    const flatExtractedTexts = extractedTexts.flat();
 
-    console.log('Extracted Texts:', extractedTexts);
+    console.log('Extracted Texts:', flatExtractedTexts);
 
     // Count the occurrences of each bucket
     const bucketCounts = {};
-    extractedTexts.forEach(({ bucket }) => {
+    flatExtractedTexts.forEach(({ bucket }) => {
       if (bucket) {
         if (bucketCounts[bucket]) {
           bucketCounts[bucket]++;
@@ -152,7 +153,6 @@ app.post('/upload', upload.array('images'), async (req, res) => {
     res.status(500).send('Error performing OCR');
   }
 });
-
 
 // Start the server
 app.listen(port, () => {
