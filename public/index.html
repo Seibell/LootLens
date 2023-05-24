@@ -227,7 +227,7 @@
 
     <script>
         const input = document.querySelector('#fileUpload');
-        const beforeImagesDiv = document.querySelector('#beforeImages');
+        const beforeImagesDiv = document.querySelector('#beforeImages .carousel');
         const bucketCountsTableBody = document.querySelector('#bucketCounts tbody');
         let selectedFiles = [];
 
@@ -252,7 +252,9 @@
                         selectedFiles.splice(index, 1);
                         previewContainer.remove();
                     }
+                    document.getElementById('fileUpload').value = '';
                 });
+
 
                 previewContainer.appendChild(img);
                 previewContainer.appendChild(removeButton);
@@ -306,6 +308,10 @@
                         // Clear before images and bucket counts
                         beforeImagesDiv.innerHTML = '';
                         bucketCountsTableBody.innerHTML = '';
+
+                        // Clear the file input and reinitialize the array
+                        document.getElementById('fileUpload').value = '';
+                        selectedFiles = [];
 
                         // Display the bucket counts
                         for (const bucket in data) {
