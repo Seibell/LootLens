@@ -17,7 +17,8 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+// Change multer storage to memory
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Serve the frontend HTML file
 app.get('/', (req, res) => {
@@ -91,35 +92,31 @@ function matchTextToBucket(text) {
   }
 }
 
-// Handle file upload and perform OCR
 app.post('/upload', upload.array('images'), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     res.status(400).send('No files uploaded');
     return;
   }
 
-  const filenames = req.files.map(file => file.path);
-  const binarizedFilenames = [];
+  const fileBuffers = req.files.map(file => file.buffer);
 
   try {
     const extractedTexts = [];
 
-    for (let i = 0; i < filenames.length; i++) {
-      const filename = filenames[i];
+    for (let i = 0; i < fileBuffers.length; i++) {
+      const buffer = fileBuffers[i];
 
-      // Read the image using Jimp
-      const image = await Jimp.read(filename);
+      // Load the buffer into a Jimp image
+      const image = await Jimp.read(buffer);
 
       // Preprocess the image
       const processedImage = await preprocessImage(image);
 
-      // Save the binarized image
-      const binarizedFilename = `uploads/binarized${Date.now()}.png`;
-      await processedImage.writeAsync(binarizedFilename);
-      binarizedFilenames.push(binarizedFilename);
+      // Get a buffer from the processed image
+      const processedBuffer = await processedImage.getBufferAsync(Jimp.AUTO);
 
-      // Perform OCR on the binarized image
-      const { data: { text } } = await Tesseract.recognize(binarizedFilename, 'eng');
+      // Perform OCR on the processed buffer
+      const { data: { text } } = await Tesseract.recognize(processedBuffer, 'eng');
 
       console.log('OCR Result:', text);
 
@@ -155,6 +152,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
     res.status(500).send('Error performing OCR');
   }
 });
+
 
 // Start the server
 app.listen(port, () => {
