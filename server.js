@@ -8,16 +8,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Configure Multer to handle file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-
-// Change multer storage to memory
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Serve the frontend HTML file
@@ -25,8 +15,8 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Serve the uploads folder statically
-app.use('/uploads', express.static('uploads'));
+// Serve the images folder statically
+app.use(express.static('public'));
 
 // Preprocess the image
 async function preprocessImage(image) {
