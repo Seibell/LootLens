@@ -16,8 +16,5 @@ yarn-error.log
 logs/
 *.log
 
-# HTML files
-public/*.html
-
 # Generated files
 uploads/
