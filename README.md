@@ -1,7 +1,6 @@
 # split-drops-accumulator
 Boss Drop Split Automater allows a screenshot of boss loots to be uploaded, returning the accumulated loots for the entire party.
 
-## Deployed on Render
 ### https://maplestory-boss-drops-counter.onrender.com/
 
 # Todo
