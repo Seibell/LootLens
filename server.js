@@ -5,7 +5,7 @@ const Jimp = require('jimp');
 const Fuse = require('fuse.js');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Configure Multer to handle file uploads
 const storage = multer.diskStorage({
@@ -58,27 +58,27 @@ async function preprocessImage(image) {
 
 // Define expected texts and their corresponding buckets
 const expectedTexts = [
-  { text: 'You got Black Resurrection', bucket: 'Black Resurrection Flame' },
-  { text: 'You got Rainbow Resurrection', bucket: 'Rainbow Resurrection Flame' },
-  { text: 'You got Crimson Resurrection', bucket: 'Crimson Resurrection Flame' },
-  { text: 'You got Unextinguished x2', bucket: 'Unextinguished Flame x2' },
-  { text: 'You got Unextinguished x1', bucket: 'Unextinguished Flame x1' },
-  { text: 'You got Never-extinguishing', bucket: 'Never-extinguishing Flame' },
-  { text: 'You got Black never-extinguishing', bucket: 'Black Never-extinguishing Flame Fragment' },
-  { text: 'You got Sparkling Red', bucket: 'Sparkling Red' },
-  { text: 'You got Sparkling Blue', bucket: 'Sparkling Blue' },
-  { text: 'You got Amazingly Positive Chaos', bucket: 'Amazingly Positive Chaos Scroll 60%' },
-  { text: 'You got Large Boss Medal of Honor', bucket: 'Large Boss Medal of Honor' },
-  { text: 'You got Additional 50% EXP', bucket: 'Additional 50% EXP Coupon' },
-  { text: 'You got Small EXP Accumulation', bucket: 'Small EXP Accumulation Potion' },
-  { text: 'You got Suspicious Additional Cube x2', bucket: 'Suspicious Additional Cube x2' },
+  { text: 'You got Black Resurrection', bucket: 'Black Resurrection Flame', value: '200000000' },
+  { text: 'You got Rainbow Resurrection', bucket: 'Rainbow Resurrection Flame', value: '150000000' },
+  { text: 'You got Crimson Resurrection', bucket: 'Crimson Resurrection Flame', value: '50000000' },
+  { text: 'You got Unextinguished x2', bucket: 'Unextinguished Flame x2', value: '16000000' },
+  { text: 'You got Unextinguished x1', bucket: 'Unextinguished Flame x1', value: '8000000' },
+  { text: 'You got Never-extinguishing', bucket: 'Never-extinguishing Flame', value: '25000000' },
+  { text: 'You got Black never-extinguishing', bucket: 'Black Never-extinguishing Flame', value: '25000000' },
+  { text: 'You got Sparkling Red', bucket: 'Sparkling Red Potion', value: '8000000' },
+  { text: 'You got Sparkling Blue', bucket: 'Sparkling Blue Potion', value: '1500000' },
+  { text: 'You got Amazingly Positive Chaos', bucket: 'Amazingly Positive Chaos Scroll 60%', value: '35000000' },
+  { text: 'You got Large Boss Medal of Honor', bucket: 'Large Boss Medal of Honor', value: '10000000' },
+  { text: 'You got Additional 50% EXP', bucket: 'Additional 50% EXP Coupon', value: '4000000' },
+  { text: 'You got Small EXP Accumulation', bucket: 'Small EXP Accumulation Potion', value: '8000000' },
+  { text: 'You got Suspicious Additional Cube x2', bucket: 'Suspicious Additional Cube x2', value: '4000000' },
 ];
 
 // Perform fuzzy matching to determine the bucket for the given text
 function matchTextToBucket(text) {
   const options = {
     keys: ['text'],
-    threshold: 0.4, // Adjust the threshold as needed
+    threshold: 0.5, // Adjust the threshold as needed
   };
 
   const fuse = new Fuse(expectedTexts, options);
