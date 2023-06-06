@@ -213,6 +213,7 @@
                     <tr>
                         <th>Bucket</th>
                         <th>Count</th>
+                        <th>Value</th> <!-- Added this line -->
                     </tr>
                 </thead>
                 <tbody>
@@ -300,21 +301,20 @@
                 xhr.open('POST', '/upload');
 
                 xhr.onload = function () {
-                    // Handle the response
                     if (xhr.status === 200) {
                         const data = JSON.parse(xhr.responseText);
                         console.log(JSON.stringify(data));
 
-                        // Clear before images and bucket counts
                         beforeImagesDiv.innerHTML = '';
                         bucketCountsTableBody.innerHTML = '';
 
-                        // Clear the file input and reinitialize the array
                         document.getElementById('fileUpload').value = '';
                         selectedFiles = [];
 
-                        // Display the bucket counts
-                        for (const bucket in data) {
+                        const bucketCounts = data["Bucket Counts"];
+                        const bucketValues = data["Bucket Values"];
+
+                        for (const bucket in bucketCounts) {
                             const row = document.createElement('tr');
 
                             const bucketCell = document.createElement('td');
@@ -322,29 +322,41 @@
                             row.appendChild(bucketCell);
 
                             const countCell = document.createElement('td');
-                            countCell.textContent = data[bucket];
+                            countCell.textContent = bucketCounts[bucket];
                             row.appendChild(countCell);
+
+                            const valueCell = document.createElement('td');
+                            valueCell.textContent = bucketValues[bucket];
+                            row.appendChild(valueCell);
 
                             bucketCountsTableBody.appendChild(row);
                         }
 
-                        // Show the result and the bucket count table
+                        // Display total value
+                        const totalValueRow = document.createElement('tr');
+
+                        const totalValueLabelCell = document.createElement('td');
+                        totalValueLabelCell.textContent = "Total Value";
+                        totalValueRow.appendChild(totalValueLabelCell);
+
+                        const totalValueCell = document.createElement('td');
+                        totalValueCell.setAttribute('colspan', '2'); // Add this line
+                        totalValueCell.textContent = data["Total Value"] + " mil";
+                        totalValueRow.appendChild(totalValueCell);
+
+                        bucketCountsTableBody.appendChild(totalValueRow);
+
                         resultDiv.style.display = 'block';
                         bucketCountsTable.style.display = 'table';
-
-                        // Clear selectedFiles array for next round of uploads
-                        selectedFiles = [];
                     } else {
                         resultDiv.textContent = 'An error occurred.';
                     }
-
                     circularProgress.style.display = 'none';
                 };
 
                 xhr.send(formData);
             }
         }
-
     </script>
 </body>
 

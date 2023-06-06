@@ -49,20 +49,20 @@ async function preprocessImage(image) {
 
 // Define expected texts and their corresponding buckets
 const expectedTexts = [
-  { text: 'You got Black Resurrection', bucket: 'Black Resurrection Flame', value: '200000000' },
-  { text: 'You got Rainbow Resurrection', bucket: 'Rainbow Resurrection Flame', value: '150000000' },
-  { text: 'You got Crimson Resurrection', bucket: 'Crimson Resurrection Flame', value: '50000000' },
-  { text: 'You got Unextinguished x2', bucket: 'Unextinguished Flame x2', value: '16000000' },
-  { text: 'You got Unextinguished x1', bucket: 'Unextinguished Flame x1', value: '8000000' },
-  { text: 'You got Never-extinguishing', bucket: 'Never-extinguishing Flame', value: '25000000' },
-  { text: 'You got Black never-extinguishing', bucket: 'Black Never-extinguishing Flame', value: '25000000' },
-  { text: 'You got Sparkling Red', bucket: 'Sparkling Red Potion', value: '8000000' },
-  { text: 'You got Sparkling Blue', bucket: 'Sparkling Blue Potion', value: '1500000' },
-  { text: 'You got Amazingly Positive Chaos', bucket: 'Amazingly Positive Chaos Scroll 60%', value: '35000000' },
-  { text: 'You got Large Boss Medal of Honor', bucket: 'Large Boss Medal of Honor', value: '10000000' },
-  { text: 'You got Additional 50% EXP', bucket: 'Additional 50% EXP Coupon', value: '4000000' },
-  { text: 'You got Small EXP Accumulation', bucket: 'Small EXP Accumulation Potion', value: '8000000' },
-  { text: 'You got Suspicious Additional Cube x2', bucket: 'Suspicious Additional Cube x2', value: '4000000' },
+  { text: 'You got Black Resurrection', bucket: 'Black Resurrection Flame', value: '200' },
+  { text: 'You got Rainbow Resurrection', bucket: 'Rainbow Resurrection Flame', value: '150' },
+  { text: 'You got Crimson Resurrection', bucket: 'Crimson Resurrection Flame', value: '50' },
+  { text: 'You got Unextinguished x2', bucket: 'Unextinguished Flame x2', value: '16' },
+  { text: 'You got Unextinguished x1', bucket: 'Unextinguished Flame x1', value: '8' },
+  { text: 'You got Never-extinguishing', bucket: 'Never-extinguishing Flame', value: '25' },
+  { text: 'You got Black never-extinguishing', bucket: 'Black Never-extinguishing Flame', value: '25' },
+  { text: 'You got Sparkling Red', bucket: 'Sparkling Red Potion', value: '8' },
+  { text: 'You got Sparkling Blue', bucket: 'Sparkling Blue Potion', value: '1.5' },
+  { text: 'You got Amazingly Positive Chaos', bucket: 'Amazingly Positive Chaos Scroll 60%', value: '35' },
+  { text: 'You got Large Boss Medal of Honor', bucket: 'Large Boss Medal of Honor', value: '10' },
+  { text: 'You got Additional 50% EXP', bucket: 'Additional 50% EXP Coupon', value: '5' },
+  { text: 'You got Small EXP Accumulation', bucket: 'Small EXP Accumulation Potion', value: '8' },
+  { text: 'You got Suspicious Additional Cube x2', bucket: 'Suspicious Additional Cube x2', value: '5' },
 ];
 
 // Perform fuzzy matching to determine the bucket for the given text
@@ -123,21 +123,31 @@ app.post('/upload', upload.array('images'), async (req, res) => {
 
     console.log('Extracted Texts:', flatExtractedTexts);
 
-    // Count the occurrences of each bucket
+    // Count the occurrences of each bucket and accumulate the values
     const bucketCounts = {};
+    const bucketValues = {};  // Stores the total value for each bucket
+    let totalValue = 0;  // Stores the total value of all buckets
     flatExtractedTexts.forEach(({ bucket }) => {
       if (bucket) {
-        if (bucketCounts[bucket]) {
-          bucketCounts[bucket]++;
-        } else {
-          bucketCounts[bucket] = 1;
+        const bucketObj = expectedTexts.find(obj => obj.bucket === bucket);
+        if (bucketObj) {
+          bucketCounts[bucket] = (bucketCounts[bucket] || 0) + 1;
+          // If bucket already has a value, add to it, otherwise initialize with the value
+          bucketValues[bucket] = (bucketValues[bucket] || 0) + Number(bucketObj.value);
+          totalValue += Number(bucketObj.value);
         }
       }
     });
 
     console.log('Bucket Counts:', bucketCounts);
+    console.log('Bucket Values:', bucketValues);
+    console.log('Total Value:', totalValue);
 
-    res.json(bucketCounts);
+    res.json({
+      "Bucket Counts": bucketCounts,
+      "Bucket Values": bucketValues,
+      "Total Value": totalValue
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error performing OCR');
