@@ -3,6 +3,7 @@ const multer = require('multer');
 const Tesseract = require('tesseract.js');
 const Jimp = require('jimp');
 const Fuse = require('fuse.js');
+const bodyParser = require('body-parser');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,6 +18,9 @@ app.get('/', (req, res) => {
 
 // Serve the images folder statically
 app.use(express.static('public'));
+
+// Parse JSON bodies for this app
+app.use(bodyParser.json());
 
 // Preprocess the image
 async function preprocessImage(image) {
@@ -46,6 +50,23 @@ async function preprocessImage(image) {
 
   return image;
 }
+
+// New POST endpoint to update expectedTexts array
+app.post('/update-values', (req, res) => {
+  const { newValues } = req.body;
+  if (newValues) {
+    // Update the expectedTexts array with the new values
+    newValues.forEach(({ bucket, value }) => {
+      const expectedText = expectedTexts.find((text) => text.bucket === bucket);
+      if (expectedText) {
+        expectedText.value = value;
+      }
+    });
+    res.send('Values updated successfully');
+  } else {
+    res.status(400).send('Invalid request');
+  }
+});
 
 // Define expected texts and their corresponding buckets
 const expectedTexts = [
@@ -82,6 +103,12 @@ function matchTextToBucket(text) {
   }
 }
 
+// New endpoint to get expectedTexts array
+app.get('/get-expected-texts', (req, res) => {
+  res.json(expectedTexts);
+});
+
+// POST endpoint to update expected texts array
 app.post('/upload', upload.array('images'), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     res.status(400).send('No files uploaded');

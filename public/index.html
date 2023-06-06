@@ -108,6 +108,12 @@
             display: none;
         }
 
+        #open-update-modal-container {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+        }
+
         /* Style and center the upload container */
         .upload-container {
             display: flex;
@@ -199,6 +205,9 @@
 </head>
 
 <body>
+    <div id="open-update-modal-container">
+        <button id="open-update-modal">Update Values</button>
+    </div>
     <div class="upload-container">
         <label for="fileUpload">Choose Files</label>
         <input type="file" id="fileUpload" multiple>
@@ -357,6 +366,52 @@
                 xhr.send(formData);
             }
         }
+    </script>
+    <script>
+        const openUpdateModalButton = document.getElementById('open-update-modal');
+        openUpdateModalButton.addEventListener('click', async function () {
+            const response = await fetch('/get-expected-texts');
+            const expectedTexts = await response.json();
+
+            // Open the dialog
+            const form = document.createElement('form');
+            form.id = 'update-form';
+            expectedTexts.forEach((expectedText, index) => {
+                const label = document.createElement('label');
+                label.textContent = expectedText.bucket;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = expectedText.bucket;
+                input.value = expectedText.value;
+                form.appendChild(label);
+                form.appendChild(input);
+            });
+            const submitButton = document.createElement('input');
+            submitButton.type = 'submit';
+            form.appendChild(submitButton);
+            document.body.appendChild(form);
+            // Listen for form submission
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const formData = new FormData(form);
+                const newValues = Array.from(formData.entries()).map(([bucket, value]) => ({
+                    text: `You got ${bucket}`,
+                    bucket,
+                    value,
+                }));
+                const updateResponse = await fetch('/update-values', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ newValues }),
+                });
+                const result = await updateResponse.text();
+                console.log(result);
+                // Remove the form after submission
+                document.body.removeChild(form);
+            });
+        });
     </script>
 </body>
 
