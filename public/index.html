@@ -201,6 +201,47 @@
                 transform: rotate(360deg);
             }
         }
+
+        #update-form {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+        }
+
+        #update-form .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        #update-form label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        #update-form input[type="text"] {
+            flex-grow: 1;
+            padding: 5px;
+        }
+
+        #update-form input[type="submit"] {
+            background-color: #1d3557;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color .3s;
+        }
+
+        #update-form input[type="submit"]:hover {
+            background-color: #457b9d;
+        }
     </style>
 </head>
 
@@ -369,48 +410,66 @@
     </script>
     <script>
         const openUpdateModalButton = document.getElementById('open-update-modal');
-        openUpdateModalButton.addEventListener('click', async function () {
-            const response = await fetch('/get-expected-texts');
-            const expectedTexts = await response.json();
+        let form = null; // Store a reference to the form
 
-            // Open the dialog
-            const form = document.createElement('form');
-            form.id = 'update-form';
-            expectedTexts.forEach((expectedText, index) => {
-                const label = document.createElement('label');
-                label.textContent = expectedText.bucket;
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.name = expectedText.bucket;
-                input.value = expectedText.value;
-                form.appendChild(label);
-                form.appendChild(input);
-            });
-            const submitButton = document.createElement('input');
-            submitButton.type = 'submit';
-            form.appendChild(submitButton);
-            document.body.appendChild(form);
-            // Listen for form submission
-            form.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                const formData = new FormData(form);
-                const newValues = Array.from(formData.entries()).map(([bucket, value]) => ({
-                    text: `You got ${bucket}`,
-                    bucket,
-                    value,
-                }));
-                const updateResponse = await fetch('/update-values', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ newValues }),
-                });
-                const result = await updateResponse.text();
-                console.log(result);
-                // Remove the form after submission
+        openUpdateModalButton.addEventListener('click', async function () {
+            // Toggle the form visibility
+            if (form) {
+                // Remove the form
                 document.body.removeChild(form);
-            });
+                form = null;
+            } else {
+                const response = await fetch('/get-expected-texts');
+                const expectedTexts = await response.json();
+
+                // Open the dialog
+                form = document.createElement('form');
+                form.id = 'update-form';
+                expectedTexts.forEach((expectedText, index) => {
+                    const row = document.createElement('div');
+                    row.classList.add('form-row');
+
+                    const label = document.createElement('label');
+                    label.textContent = expectedText.bucket;
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.name = expectedText.bucket;
+                    input.value = expectedText.value;
+
+                    row.appendChild(label);
+                    row.appendChild(input);
+                    form.appendChild(row);
+                });
+
+                const submitButton = document.createElement('input');
+                submitButton.type = 'submit';
+                form.appendChild(submitButton);
+                document.body.appendChild(form);
+
+                // Listen for form submission
+                form.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const formData = new FormData(form);
+                    const newValues = Array.from(formData.entries()).map(([bucket, value]) => ({
+                        text: `You got ${bucket}`,
+                        bucket,
+                        value,
+                    }));
+                    const updateResponse = await fetch('/update-values', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ newValues }),
+                    });
+                    const result = await updateResponse.text();
+                    console.log(result);
+                    // Remove the form after submission
+                    document.body.removeChild(form);
+                    form = null;
+                });
+            }
         });
     </script>
 </body>
